@@ -1,0 +1,24 @@
+# Python virtual environments & bytecode
+venv/
+**/venv/
+__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# Builder Service temporary work/output directories
+builder_service/work/
+builder_service/output/
+
+# IDE & OS files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+**/build/
+.gradle/
+**/bin/
+**/*.apk
+**/*.aab
+**/*.ipa

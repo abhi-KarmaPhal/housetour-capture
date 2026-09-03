@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>HouseTour Capture | Guided Spatial Recorder</title>
+  
+  <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- JSZip for in-browser client-side myhouse.scan packaging -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  
+  <!-- Mobile Full-Screen & Standalone PWA Settings -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HouseTour Capture">
+  <meta name="theme-color" content="#0b0f17">
+  <link rel="manifest" href="/recorder/manifest.json">
+  
+  <link rel="stylesheet" href="/recorder/css/style.css">
+</head>
+<body>
+
+  <div class="recorder-app-layout">
+    
+    <!-- Top Bar -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon"><i data-lucide="video"></i></div>
+        <div>
+          <h1>HOUSETUR <span>CAPTURE</span></h1>
+          <span class="header-subtitle">Agent Spatial Recorder v1.0</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="metric-chip" style="font-size: 11px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 4px 10px; border-radius: 9999px; display: flex; align-items: center; gap: 5px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span> Cloud Sync Ready
+        </div>
+      </div>
+    </header>
+
+    <!-- Stepper Navigation Header -->
+    <nav class="stepper-bar">
+      <div class="step-item active" id="step-nav-1" data-step="1">
+        <span class="step-num">1</span>
+        <span class="step-title">Property</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="step-nav-2" data-step="2">
+        <span class="step-num">2</span>
+        <span class="step-title">Floors & Rooms</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="step-nav-3" data-step="3">
+        <span class="step-num">3</span>
+        <span class="step-title">Guided Scan</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="step-nav-4" data-step="4">
+        <span class="step-num">4</span>
+        <span class="step-title">Upload</span>
+      </div>
+    </nav>
+
+    <!-- Main Content Stage Area -->
+    <main class="stage-container">
+
+      <!-- STEP 1: Property Info -->
+      <section class="stage-panel" id="stage-1">
+        <div class="card-hero">
+          <div class="hero-icon"><i data-lucide="building"></i></div>
+          <h2>Property Setup</h2>
+          <p>Enter the property listing details before beginning spatial capture.</p>
+        </div>
+
+        <form id="property-form" class="form-grid">
+          <div class="form-group">
+            <label for="prop-name">Property Name / Title</label>
+            <input type="text" id="prop-name" placeholder="e.g. 3BHK Luxury Villa" value="3BHK Luxury Penthouse" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prop-client">Agent / Client ID</label>
+              <input type="text" id="prop-client" placeholder="e.g. agent_77" value="agent_77">
+            </div>
+            <div class="form-group">
+              <label for="prop-address">Location / Address</label>
+              <input type="text" id="prop-address" placeholder="e.g. Mumbai, India" value="Skyline Boulevard, Mumbai">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prop-notes">Property Notes / Features</label>
+            <textarea id="prop-notes" rows="2" placeholder="e.g. Sea-facing, high natural lighting, modern finishes">High ceiling, open kitchen, attached terrace</textarea>
+          </div>
+
+          <button type="button" class="btn-primary btn-block btn-lg" id="btn-next-step-1">
+            <span>Proceed to Floor & Room Plan</span> <i data-lucide="arrow-right"></i>
+          </button>
+        </form>
+      </section>
+
+      <!-- STEP 2: Floors & Rooms Plan Config -->
+      <section class="stage-panel" id="stage-2" style="display: none;">
+        <div class="card-hero">
+          <div class="hero-icon"><i data-lucide="layers"></i></div>
+          <h2>Structure & Topology</h2>
+          <p>Organize the rooms and floors for this property.</p>
+        </div>
+
+        <!-- Floor Selector Tabs -->
+        <div class="floor-tabs-bar">
+          <label class="floor-label">Select Floor:</label>
+          <div class="floor-tabs" id="floor-tabs-list">
+            <button type="button" class="floor-tab active" data-floor="Ground Floor">Ground Floor</button>
+            <button type="button" class="floor-tab" data-floor="1st Floor">1st Floor</button>
+            <button type="button" class="floor-tab" data-floor="Terrace">Terrace / Roof</button>
+          </div>
+          <button type="button" class="btn-outline-sm" id="btn-add-floor"><i data-lucide="plus"></i> Add Floor</button>
+        </div>
+
+        <!-- Room Queue & Topology List -->
+        <div class="rooms-builder-box">
+          <div class="box-header">
+            <h3>Rooms on <span id="active-floor-label">Ground Floor</span></h3>
+            <span class="room-count-tag" id="total-rooms-count">0 Rooms</span>
+          </div>
+
+          <!-- Quick Add Room Chips -->
+          <div class="quick-add-chips">
+            <span class="chips-label">Quick Add:</span>
+            <button type="button" class="chip-add" data-name="Living Room">+ Living Room</button>
+            <button type="button" class="chip-add" data-name="Kitchen & Dining">+ Kitchen</button>
+            <button type="button" class="chip-add" data-name="Master Bedroom">+ Master Bed</button>
+            <button type="button" class="chip-add" data-name="Balcony">+ Balcony</button>
+            <button type="button" class="chip-add" data-name="Terrace Lounge">+ Terrace</button>
+            <button type="button" class="chip-add" data-name="Hallway / Corridor">+ Hallway</button>
+          </div>
+
+          <!-- Custom Room Input -->
+          <div class="custom-room-row">
+            <input type="text" id="custom-room-input" placeholder="Custom room name (e.g. Study Room)">
+            <button type="button" class="btn-secondary" id="btn-add-custom-room">
+              <i data-lucide="plus-circle"></i> Add
+            </button>
+          </div>
+
+          <!-- Active Rooms List -->
+          <ul class="configured-rooms-list" id="configured-rooms-list">
+            <!-- Populated dynamically -->
+          </ul>
+        </div>
+
+        <div class="btn-actions-row">
+          <button type="button" class="btn-secondary" id="btn-back-step-2">
+            <i data-lucide="arrow-left"></i> Back
+          </button>
+          <button type="button" class="btn-primary" id="btn-next-step-2">
+            <span>Start Guided Recording</span> <i data-lucide="camera"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Live Guided Camera & IMU Scanner Viewfinder -->
+      <section class="stage-panel stage-camera" id="stage-3" style="display: none;">
+        
+        <!-- Live Camera Viewfinder Overlay -->
+        <div class="viewfinder-container">
+          <video id="camera-preview" autoplay playsinline muted></video>
+          <canvas id="camera-canvas" style="display: none;"></canvas>
+
+          <!-- Top Viewfinder Header -->
+          <div class="vf-top-overlay">
+            <div class="vf-room-badge">
+              <span class="badge-floor" id="vf-floor-name">Ground Floor</span>
+              <h3 id="vf-room-name">Living Room</h3>
+            </div>
+            <div class="vf-telemetry">
+              <div class="sensor-chip" id="imu-status-chip">
+                <span class="sensor-dot"></span>
+                <span>IMU 60Hz</span>
+              </div>
+              <div class="timer-badge" id="rec-timer">00:00</div>
+            </div>
+          </div>
+
+          <!-- Central Guided Prompt Banner -->
+          <div class="vf-guide-banner" id="vf-guide-banner">
+            <i data-lucide="info" class="guide-icon"></i>
+            <div class="guide-text">
+              <strong id="guide-headline">Stand in room center</strong>
+              <span id="guide-subtext">Hold phone vertically and rotate slowly 360 degrees</span>
+            </div>
+          </div>
+
+          <!-- Bottom Camera Action Controls -->
+          <div class="vf-bottom-controls">
+            <!-- Record / Stop Trigger Button -->
+            <button type="button" class="btn-shutter" id="btn-shutter">
+              <div class="shutter-inner"></div>
+            </button>
+
+            <!-- Transition to Next Room / Doorway -->
+            <div class="vf-step-controls">
+              <button type="button" class="btn-doorway" id="btn-doorway-pass" style="display: none;">
+                <i data-lucide="door-open"></i> Record Doorway Transition
+              </button>
+              <button type="button" class="btn-next-room" id="btn-room-done" style="display: none;">
+                <i data-lucide="check-circle"></i> Complete Room
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Captured Summary Mini-Tray -->
+        <div class="captured-tray">
+          <span>Captured (<span id="captured-count">0</span>):</span>
+          <div class="captured-badges" id="captured-badges-list"></div>
+        </div>
+
+        <div class="btn-actions-row" style="margin-top: 14px;">
+          <button type="button" class="btn-secondary" id="btn-back-step-3">
+            <i data-lucide="arrow-left"></i> Reconfigure Plan
+          </button>
+          <button type="button" class="btn-primary" id="btn-finish-recording">
+            <span>Package & Upload Scan</span> <i data-lucide="upload-cloud"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 4: Packaging & Upload to Builder Service -->
+      <section class="stage-panel" id="stage-4" style="display: none;">
+        <div class="card-hero">
+          <div class="hero-icon"><i data-lucide="package-check"></i></div>
+          <h2>Tour Package Generation</h2>
+          <p>Compressing room videos, 60Hz IMU trajectories, and room topology into <code>myhouse.scan</code>.</p>
+        </div>
+
+        <div class="package-summary-card">
+          <div class="summary-row">
+            <span>Property Name:</span>
+            <strong id="sum-prop-name">3BHK Luxury Penthouse</strong>
+          </div>
+          <div class="summary-row">
+            <span>Rooms Captured:</span>
+            <strong id="sum-rooms-count">0 Rooms</strong>
+          </div>
+          <div class="summary-row">
+            <span>Floors Mapped:</span>
+            <strong id="sum-floors-count">Ground Floor, 1st Floor</strong>
+          </div>
+          <div class="summary-row">
+            <span>Status:</span>
+            <strong style="color: var(--accent);">Ready to Transmit</strong>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="upload-progress-box" id="upload-progress-box">
+          <div class="progress-labels">
+            <span id="pack-status-text">Ready to package</span>
+            <span id="pack-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="pack-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Result / Success Action -->
+        <div class="upload-success-card" id="upload-success-card" style="display: none;">
+          <div class="success-icon"><i data-lucide="check-circle-2"></i></div>
+          <h3>Property Scan Submitted!</h3>
+          <p>Your property capture has been safely delivered. Our 3D processing team is now generating the interactive walkthrough.</p>
+          <div class="job-link-box">
+            <span>Confirmation ID:</span> <code id="created-job-id">-</code>
+          </div>
+          <div class="success-buttons">
+            <button type="button" class="btn-primary" id="btn-record-another">
+              <i data-lucide="plus-circle"></i> Record Another Property
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary btn-block btn-lg" id="btn-start-packaging">
+          <i data-lucide="sparkles"></i> Package myhouse.scan & Upload to Builder
+        </button>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="/recorder/js/camera_recorder.js"></script>
+  <script src="/recorder/js/imu_tracker.js"></script>
+  <script src="/recorder/js/scan_packager.js"></script>
+  <script src="/recorder/js/uploader.js"></script>
+  <script src="/recorder/js/app.js"></script>
+</body>
+</html>

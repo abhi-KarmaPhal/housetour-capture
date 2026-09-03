@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>HouseTour 3D Player | Ultra-Immersive Walkthrough</title>
+  
+  <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- JSZip for in-browser client-side .tour extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  
+  <!-- Three.js + GLTFLoader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  
+  <link rel="stylesheet" href="/player/css/style.css">
+</head>
+<body>
+
+  <!-- 3D WebGL Canvas Layer -->
+  <div id="canvas-container"></div>
+
+  <!-- Loading & Tour Drop Modal Overlay -->
+  <div id="loader-overlay" class="loader-overlay">
+    <div class="loader-card">
+      <div class="loader-brand">
+        <div class="brand-badge"><i data-lucide="box"></i></div>
+        <h1>HOUSETUR <span>3D PLAYER</span></h1>
+      </div>
+      <p class="loader-desc">Real-time 6-DOF spatial walkthrough engine with NavMesh physics.</p>
+
+      <!-- Dropzone for .tour file -->
+      <div class="tour-dropzone" id="tour-dropzone">
+        <input type="file" id="tour-file-input" accept=".tour,.zip" style="display: none;">
+        <i data-lucide="package-open" class="drop-icon"></i>
+        <div class="drop-text">
+          <strong>Drop a <code>myhouse.tour</code> file here</strong>
+          <span>or click the button below</span>
+        </div>
+        <button type="button" class="btn-primary" id="player-browse-btn" style="margin-top: 10px;">
+          <i data-lucide="folder-open"></i> Browse .tour File
+        </button>
+      </div>
+
+      <!-- Quick Server Tour Loader -->
+      <div class="server-tour-box">
+        <div class="server-tour-input-row">
+          <input type="text" id="server-tour-url" placeholder="Enter .tour URL or Job ID (e.g. /tours/{id})">
+          <button class="btn-primary" id="load-url-btn">
+            <i data-lucide="download-cloud"></i> Load
+          </button>
+        </div>
+        <button class="btn-outline btn-block" id="load-demo-tour-btn">
+          <i data-lucide="play-circle"></i> Explore Interactive Demo Villa
+        </button>
+      </div>
+
+      <div class="loader-progress" id="loader-progress" style="display: none;">
+        <div class="spinner"></div>
+        <span id="loader-status-text">Unpacking spatial tour geometry...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-Tour HUD (Heads-Up Display) -->
+  <div id="hud-container" class="hud-container" style="display: none;">
+    
+    <!-- Top Bar: Property Metadata & Controls -->
+    <header class="hud-topbar">
+      <div class="property-info">
+        <h2 id="hud-house-name">Grand Luxury Penthouse</h2>
+        <span id="hud-address"><i data-lucide="map-pin"></i> Gujarat, India</span>
+      </div>
+
+      <div class="hud-actions">
+        <!-- LOD Switcher -->
+        <div class="hud-chip lod-selector">
+          <span class="chip-label">LOD</span>
+          <button class="btn-lod active" data-lod="high">High</button>
+          <button class="btn-lod" data-lod="mid">Mid</button>
+          <button class="btn-lod" data-lod="low">Low</button>
+        </div>
+
+        <button class="btn-hud-icon" id="btn-toggle-minimap" title="Toggle Minimap">
+          <i data-lucide="map"></i>
+        </button>
+        <button class="btn-hud-icon" id="btn-toggle-fullscreen" title="Fullscreen">
+          <i data-lucide="maximize"></i>
+        </button>
+        <button class="btn-hud-icon" id="btn-exit-tour" title="Load Another Tour">
+          <i data-lucide="folder-open"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Minimap Radar Overlay -->
+    <div class="minimap-container" id="minimap-container">
+      <div class="minimap-header">
+        <span>Spatial Floorplan</span>
+        <span id="current-room-badge">Living Room</span>
+      </div>
+      <canvas id="minimap-canvas" width="180" height="180"></canvas>
+    </div>
+
+    <!-- Desktop Controls Instruction Hint -->
+    <div class="desktop-hint" id="desktop-hint">
+      <div class="key-hints">
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
+        <span><kbd>Mouse</kbd> Look</span>
+        <span><kbd>Shift</kbd> Sprint</span>
+      </div>
+      <button class="btn-ghost-sm" id="btn-lock-pointer">Click here to Lock Mouse for FPS Look</button>
+    </div>
+
+    <!-- Bottom Room Navigator Bar -->
+    <footer class="hud-bottombar">
+      <div class="room-selector-container">
+        <span class="room-nav-title"><i data-lucide="navigation"></i> Quick Teleport:</span>
+        <div class="rooms-scroll-list" id="rooms-scroll-list">
+          <!-- Populated dynamically from rooms.json -->
+        </div>
+      </div>
+    </footer>
+
+    <!-- Mobile Virtual Joystick Controls (Left = Move, Right = Look Touchpad) -->
+    <div class="mobile-touch-layer" id="mobile-touch-layer">
+      <!-- Left Joystick Zone -->
+      <div class="joystick-zone" id="joystick-zone">
+        <div class="joystick-base" id="joystick-base">
+          <div class="joystick-stick" id="joystick-stick"></div>
+        </div>
+        <span class="joystick-hint">Drag to Move</span>
+      </div>
+
+      <!-- Right Look Touchpad Zone -->
+      <div class="look-zone" id="look-zone">
+        <span class="look-hint">Swipe to Look Around</span>
+      </div>
+    </div>
+
+    <!-- Collision Alert Toast -->
+    <div class="collision-toast" id="collision-toast" style="display: none;">
+      <i data-lucide="shield-alert"></i>
+      <span>NavMesh boundary reached</span>
+    </div>
+
+  </div>
+
+  <script src="/player/js/navmesh.js"></script>
+  <script src="/player/js/tour_loader.js"></script>
+  <script src="/player/js/controls.js"></script>
+  <script src="/player/js/minimap.js"></script>
+  <script src="/player/js/scene_manager.js"></script>
+  <script src="/player/js/app.js"></script>
+</body>
+</html>
