@@ -37,13 +37,13 @@ jobs:
         run: |
           sed -i 's/\r$//' gradlew || true
           chmod +x gradlew
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log || {
+          gradle :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log || {
             echo "=== FULL GRADLE BUILD FAILURE LOG ==="
             cat build.log
             exit 1
           }
-          echo "=== Found compiled APKs ==="
-          find . -name "*.apk" -type f
+          echo "=== Found compiled APK files ==="
+          find . -name "*.apk" -ls
 
       - name: Upload Android Build Logs
         if: always()
@@ -57,7 +57,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HouseTourCapture-Android-APK
-          path: recorder_mobile/android/**/outputs/**/*.apk
+          path: |
+            recorder_mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            recorder_mobile/android/app/build/outputs/apk/debug/*.apk
+            recorder_mobile/android/**/build/outputs/apk/**/*.apk
           if-no-files-found: error
 
   # ===========================================================================
