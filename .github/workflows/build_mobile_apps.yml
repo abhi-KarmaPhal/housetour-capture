@@ -23,15 +23,19 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Build Android APK
         working-directory: recorder_mobile/android
         run: |
-          chmod +x gradlew || true
-          gradle wrapper
-          ./gradlew assembleDebug --no-daemon --stacktrace || gradle assembleDebug --stacktrace
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
@@ -40,7 +44,7 @@ jobs:
           path: |
             recorder_mobile/android/app/build/outputs/apk/debug/*.apk
             recorder_mobile/android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: warn
+          if-no-files-found: error
 
   # ===========================================================================
   # 🍏 JOB 2: Build iOS Native IPA in Free GitHub macOS Runner
@@ -67,26 +71,16 @@ jobs:
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== project.yml ==="
-          cat project.yml
-          echo ""
-          echo "=== Source files ==="
-          find HouseTourCapture -name "*.swift" | sort
-          echo ""
-          echo "=== Running xcodegen ==="
+          echo "=== Generating Xcode project from project.yml ==="
           xcodegen generate --spec project.yml
-          echo "=== XcodeGen SUCCESS ==="
-          echo ""
-          xcodebuild -project HouseTourCapture.xcodeproj -list || true
+          echo "=== Xcode project generated successfully ==="
+          xcodebuild -project HouseTourCapture.xcodeproj -list
 
       - name: Build iOS App
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== Listing source files ==="
-          find HouseTourCapture -name "*.swift" | head -20
-          echo ""
-          echo "=== Building iOS binary... ==="
+          echo "=== Compiling iOS Release Binary for generic/platform=iOS ==="
           xcodebuild build \
             -project HouseTourCapture.xcodeproj \
             -scheme HouseTourCapture \
@@ -96,19 +90,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            2>&1 | tail -80
-          echo "=== Build completed ==="
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+          echo "=== Xcode Build Finished ==="
 
       - name: Package IPA for Sideloadly
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "Locating .app bundle..."
-          find build -name "*.app" -type d | head -5
+          echo "=== Locating compiled .app bundle ==="
+          find build -name "*.app" -type d
           APP_PATH=$(find build -name "HouseTourCapture.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: No .app bundle found!"
+            echo "ERROR: No HouseTourCapture.app bundle found in build directory!"
             exit 1
           fi
           echo "Found app at: $APP_PATH"
@@ -116,7 +109,7 @@ jobs:
           cp -r "$APP_PATH" Payload/
           zip -r HouseTourCapture.ipa Payload
           ls -lh HouseTourCapture.ipa
-          echo "HouseTourCapture.ipa packaged for Sideloadly!"
+          echo "HouseTourCapture.ipa packaged successfully!"
 
       - name: Upload iOS IPA for Sideloadly
         uses: actions/upload-artifact@v4

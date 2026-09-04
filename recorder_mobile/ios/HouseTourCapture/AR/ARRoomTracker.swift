@@ -10,7 +10,7 @@ public class ARRoomTracker: NSObject, ObservableObject, RoomCaptureSessionDelega
     @Published public var detectedOpeningsCount = 0
     
     private var roomCaptureSession: RoomCaptureSession?
-    public var finalStructure: CapturedStructure?
+    public var finalRoom: CapturedRoom?
     
     public override init() {
         super.init()
@@ -22,7 +22,7 @@ public class ARRoomTracker: NSObject, ObservableObject, RoomCaptureSessionDelega
     
     public func startScanning() {
         guard let session = roomCaptureSession else { return }
-        var configuration = RoomCaptureSession.Configuration()
+        let configuration = RoomCaptureSession.Configuration()
         session.run(configuration: configuration)
     }
     
@@ -32,6 +32,7 @@ public class ARRoomTracker: NSObject, ObservableObject, RoomCaptureSessionDelega
             return
         }
         session.stop()
+        completion(finalRoom)
     }
     
     // MARK: - RoomCaptureSessionDelegate
@@ -40,6 +41,7 @@ public class ARRoomTracker: NSObject, ObservableObject, RoomCaptureSessionDelega
             self.detectedWallsCount = room.walls.count
             self.detectedDoorsCount = room.doors.count
             self.detectedOpeningsCount = room.openings.count
+            self.finalRoom = room
         }
     }
     

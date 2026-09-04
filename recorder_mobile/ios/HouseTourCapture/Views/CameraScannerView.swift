@@ -3,7 +3,7 @@ import AVFoundation
 
 public struct CameraScannerView: View {
     var propertyName: String
-    var rooms: [(id: String, name: String, floor: String)]
+    var rooms: [RoomItem]
     var onComplete: () -> Void
     var onBack: () -> Void
     
@@ -31,6 +31,9 @@ public struct CameraScannerView: View {
                             Text(rooms[currentRoomIndex].name)
                                 .font(.system(size: 20, weight: .heavy))
                                 .foregroundColor(.white)
+                            Text("Room \(currentRoomIndex + 1) of \(rooms.count)")
+                                .font(.system(size: 11))
+                                .foregroundColor(.gray)
                         }
                     }
                     Spacer()
@@ -48,13 +51,15 @@ public struct CameraScannerView: View {
                         .background(Color.black.opacity(0.6))
                         .cornerRadius(12)
                         
-                        Text(formatTimer(timerSeconds))
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.black.opacity(0.6))
-                            .cornerRadius(6)
+                        if cameraManager.isRecording {
+                            Text("REC \(formatTimer(timerSeconds))")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.9))
+                                .cornerRadius(6)
+                        }
                     }
                 }
                 .padding(20)
@@ -65,27 +70,35 @@ public struct CameraScannerView: View {
                 Spacer()
                 
                 // Guidance Card
-                VStack(spacing: 4) {
-                    Text(cameraManager.isRecording ? "Recording in progress..." : "Stand in Room Center")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                    Text(cameraManager.isRecording ? "Rotate slowly and steadily 360 degrees" : "Hold iPhone vertical and tap the red shutter to start")
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
+                if !cameraManager.isRecording {
+                    VStack(spacing: 4) {
+                        Text("Stand in Room Center")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Hold phone upright and tap the red shutter to start a 360° slow pan.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(14)
+                    .background(Color(red: 19/255, green: 27/255, blue: 42/255).opacity(0.9))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(red: 6/255, green: 182/255, blue: 212/255), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 20)
                 }
-                .padding(12)
-                .background(Color(red: 19/255, green: 27/255, blue: 42/255).opacity(0.9))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(red: 6/255, green: 182/255, blue: 212/255), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
                 
                 Spacer()
                 
                 // Shutter Button & Transitions
                 VStack(spacing: 14) {
+                    if cameraManager.isRecording {
+                        Text("Rotate slowly and steadily 360°")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(red: 245/255, green: 158/255, blue: 11/255))
+                    }
+                    
                     if !cameraManager.isRecording {
                         Button(action: startRoomScan) {
                             Circle()
@@ -120,8 +133,9 @@ public struct CameraScannerView: View {
                                     .font(.system(size: 12, weight: .bold))
                                 Image(systemName: "arrow.right")
                             }
-                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                            .foregroundColor(recordedRoomCount > 0 ? Color(red: 16/255, green: 185/255, blue: 129/255) : Color.gray)
                         }
+                        .disabled(recordedRoomCount == 0)
                     }
                     .padding(.horizontal, 20)
                 }

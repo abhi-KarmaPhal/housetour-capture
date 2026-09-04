@@ -12,15 +12,11 @@ struct HouseTourCaptureApp: App {
 
 public struct MainCaptureFlowView: View {
     @State private var currentStep = 1
-    @State private var propertyName = "3BHK Luxury Penthouse"
-    @State private var clientId = "agent_77"
-    @State private var address = "Skyline Boulevard, Mumbai"
-    @State private var selectedFloors: [String] = ["Ground Floor", "1st Floor", "Terrace"]
-    @State private var rooms: [(id: String, name: String, floor: String)] = [
-        ("room_01", "Living Room", "Ground Floor"),
-        ("room_02", "Kitchen & Dining", "Ground Floor"),
-        ("room_03", "Terrace Lounge", "Terrace")
-    ]
+    @State private var propertyName = ""
+    @State private var clientId = ""
+    @State private var address = ""
+    @State private var selectedFloors: [String] = ["Ground Floor"]
+    @State private var rooms: [RoomItem] = []
     
     public init() {}
     
@@ -36,10 +32,10 @@ public struct MainCaptureFlowView: View {
                         Image(systemName: "video.fill.badge.plus")
                             .font(.system(size: 20))
                             .foregroundColor(Color(red: 6/255, green: 182/255, blue: 212/255))
-                        Text("HOUSETUR")
+                        Text("HOUSETOUR")
                             .font(.system(size: 18, weight: .black))
                             .foregroundColor(.white)
-                        Text("CAPTURE NATIVE")
+                        Text("CAPTURE")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
                         Spacer()
@@ -87,7 +83,13 @@ public struct MainCaptureFlowView: View {
                         CameraScannerView(propertyName: propertyName, rooms: rooms, onComplete: { currentStep = 4 }, onBack: { currentStep = 2 })
                             .tag(3)
                         
-                        UploadView(propertyName: propertyName, clientId: clientId, address: address, roomsCount: rooms.count, onReset: { currentStep = 1 })
+                        UploadView(propertyName: propertyName, clientId: clientId, address: address, roomsCount: rooms.count, onReset: {
+                            currentStep = 1
+                            propertyName = ""
+                            clientId = ""
+                            address = ""
+                            rooms = []
+                        })
                             .tag(4)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))

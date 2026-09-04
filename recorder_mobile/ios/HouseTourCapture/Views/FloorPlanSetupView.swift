@@ -2,13 +2,13 @@ import SwiftUI
 
 public struct FloorPlanSetupView: View {
     @Binding var floors: [String]
-    @Binding var rooms: [(id: String, name: String, floor: String)]
+    @Binding var rooms: [RoomItem]
     @State private var selectedFloor = "Ground Floor"
-    @State private var customRoomName = ""
     var onNext: () -> Void
     var onBack: () -> Void
     
-    private let quickRoomSuggestions = ["Living Room", "Kitchen & Dining", "Master Bedroom", "Balcony", "Terrace Lounge", "Corridor"]
+    private let floorOptions = ["Ground Floor", "1st Floor", "2nd Floor", "Terrace"]
+    private let quickRoomSuggestions = ["Living Room", "Kitchen & Dining", "Master Bedroom", "Balcony", "Bathroom", "Corridor", "Terrace Lounge"]
     
     public var body: some View {
         ScrollView {
@@ -38,8 +38,13 @@ public struct FloorPlanSetupView: View {
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(floors, id: \.self) { floor in
-                                Button(action: { selectedFloor = floor }) {
+                            ForEach(floorOptions, id: \.self) { floor in
+                                Button(action: {
+                                    selectedFloor = floor
+                                    if !floors.contains(floor) {
+                                        floors.append(floor)
+                                    }
+                                }) {
                                     Text(floor)
                                         .font(.system(size: 12, weight: .semibold))
                                         .padding(.horizontal, 14)
@@ -87,7 +92,7 @@ public struct FloorPlanSetupView: View {
                         Spacer()
                     }
                     
-                    ForEach(Array(rooms.enumerated()), id: \.element.id) { index, room in
+                    ForEach(Array(rooms.enumerated()), id: \.offset) { index, room in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(index + 1). \(room.name)")
@@ -98,7 +103,11 @@ public struct FloorPlanSetupView: View {
                                     .foregroundColor(Color(red: 6/255, green: 182/255, blue: 212/255))
                             }
                             Spacer()
-                            Button(action: { rooms.remove(at: index) }) {
+                            Button(action: {
+                                if index < rooms.count {
+                                    rooms.remove(at: index)
+                                }
+                            }) {
                                 Image(systemName: "trash")
                                     .font(.system(size: 12))
                                     .foregroundColor(.red.opacity(0.8))
@@ -133,9 +142,10 @@ public struct FloorPlanSetupView: View {
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color(red: 16/255, green: 185/255, blue: 129/255))
+                        .background(rooms.isEmpty ? Color.gray : Color(red: 16/255, green: 185/255, blue: 129/255))
                         .cornerRadius(10)
                     }
+                    .disabled(rooms.isEmpty)
                 }
             }
             .padding(20)
@@ -143,7 +153,6 @@ public struct FloorPlanSetupView: View {
     }
     
     private func addRoom(name: String) {
-        let id = "room_\(UUID().uuidString.prefix(6))"
-        rooms.append((id: id, name: name, floor: selectedFloor))
+        rooms.append(RoomItem(name: name, floor: selectedFloor))
     }
 }
