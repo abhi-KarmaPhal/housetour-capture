@@ -59,21 +59,25 @@ jobs:
           xcode-version: '15.4'
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: |
+          export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
+          brew install xcodegen
 
       - name: Generate Xcode Project
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== XcodeGen project.yml ==="
+          echo "=== project.yml ==="
           cat project.yml
           echo ""
-          echo "=== Generating Xcode project... ==="
-          xcodegen generate
-          echo "=== Generated project successfully ==="
+          echo "=== Source files ==="
+          find HouseTourCapture -name "*.swift" | sort
           echo ""
-          echo "=== Available schemes ==="
-          xcodebuild -project HouseTourCapture.xcodeproj -list
+          echo "=== Running xcodegen ==="
+          xcodegen generate --spec project.yml
+          echo "=== XcodeGen SUCCESS ==="
+          echo ""
+          xcodebuild -project HouseTourCapture.xcodeproj -list || true
 
       - name: Build iOS App
         working-directory: recorder_mobile/ios
