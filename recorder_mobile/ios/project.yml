@@ -1,0 +1,19 @@
+name: HouseTourCapture
+options:
+  bundleIdPrefix: com.housetour
+targets:
+  HouseTourCapture:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: HouseTourCapture
+    info:
+      path: HouseTourCapture/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.housetour.capture
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: "NO"
+        DEVELOPMENT_TEAM: ""

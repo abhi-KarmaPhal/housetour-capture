@@ -43,10 +43,10 @@ jobs:
           if-no-files-found: warn
 
   # ===========================================================================
-  # 🍏 JOB 2: Build iOS App in Free GitHub macOS Runner
+  # 🍏 JOB 2: Build iOS Native IPA in Free GitHub macOS Runner
   # ===========================================================================
   build-ios:
-    name: 🍏 Build iOS Native Package
+    name: 🍏 Build iOS Native IPA
     runs-on: macos-14
 
     steps:
@@ -58,14 +58,32 @@ jobs:
         with:
           xcode-version: '15.4'
 
-      - name: Build iOS Package
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project & Build IPA
         working-directory: recorder_mobile/ios
         run: |
-          echo "Compiling Swift & ARKit Package..."
-          swift build -v || echo "Source validated"
+          xcodegen generate
+          xcodebuild -project HouseTourCapture.xcodeproj \
+                     -scheme HouseTourCapture \
+                     -sdk iphoneos \
+                     -configuration Release \
+                     -derivedDataPath build \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     clean build
+          
+          echo "Packaging .ipa for Sideloadly..."
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/HouseTourCapture.app Payload/
+          zip -r HouseTourCapture.ipa Payload
+          echo "IPA created successfully!"
 
-      - name: Upload iOS App Package
+      - name: Upload iOS IPA for Sideloadly
         uses: actions/upload-artifact@v4
         with:
-          name: HouseTourCapture-iOS-Package
-          path: recorder_mobile/ios/
+          name: HouseTourCapture-iOS-IPA
+          path: recorder_mobile/ios/HouseTourCapture.ipa
+          if-no-files-found: error
