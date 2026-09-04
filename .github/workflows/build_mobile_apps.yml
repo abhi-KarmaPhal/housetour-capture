@@ -42,6 +42,8 @@ jobs:
             cat build.log
             exit 1
           }
+          echo "=== Found compiled APKs ==="
+          find . -name "*.apk" -type f
 
       - name: Upload Android Build Logs
         if: always()
@@ -55,9 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HouseTourCapture-Android-APK
-          path: |
-            recorder_mobile/android/app/build/outputs/apk/debug/*.apk
-            recorder_mobile/android/app/build/outputs/apk/**/*.apk
+          path: recorder_mobile/android/**/outputs/**/*.apk
           if-no-files-found: error
 
   # ===========================================================================
@@ -90,14 +90,12 @@ jobs:
       - name: Generate Xcode Project
         working-directory: recorder_mobile/ios
         run: |
-          echo "=== Content of project.yml ==="
-          cat project.yml
-          echo "=== Running xcodegen generate ==="
-          xcodegen generate --verbose 2>&1 | tee xcodegen.log || {
-            echo "=== FULL XCODEGEN LOG ==="
-            cat xcodegen.log
-            exit 1
-          }
+          set -e
+          echo "=== Directory contents ==="
+          ls -la
+          echo "=== Generating Xcode project ==="
+          xcodegen generate --spec project.yml
+          echo "=== Project generation successful ==="
           xcodebuild -project HouseTourCapture.xcodeproj -list
 
       - name: Build iOS App

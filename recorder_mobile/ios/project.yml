@@ -1,6 +1,4 @@
 name: HouseTourCapture
-options:
-  bundleIdPrefix: com.housetour
 targets:
   HouseTourCapture:
     type: application
