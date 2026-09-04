@@ -64,22 +64,27 @@ jobs:
       - name: Generate Xcode Project & Build IPA
         working-directory: recorder_mobile/ios
         run: |
+          set -e
+          echo "Generating Xcode Project..."
           xcodegen generate
-          xcodebuild -project HouseTourCapture.xcodeproj \
-                     -scheme HouseTourCapture \
-                     -sdk iphoneos \
-                     -configuration Release \
-                     -derivedDataPath build \
-                     CODE_SIGNING_ALLOWED=NO \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     clean build
+          
+          echo "Building iOS App Binary..."
+          xcodebuild build \
+            -project HouseTourCapture.xcodeproj \
+            -scheme HouseTourCapture \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
           
           echo "Packaging .ipa for Sideloadly..."
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/HouseTourCapture.app Payload/
           zip -r HouseTourCapture.ipa Payload
-          echo "IPA created successfully!"
+          echo "HouseTourCapture.ipa packaged successfully!"
 
       - name: Upload iOS IPA for Sideloadly
         uses: actions/upload-artifact@v4
