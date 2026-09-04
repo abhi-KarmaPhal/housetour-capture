@@ -1,8 +1,6 @@
 name: HouseTourCapture
 options:
   bundleIdPrefix: com.housetour
-  deploymentTarget:
-    iOS: "16.0"
 targets:
   HouseTourCapture:
     type: application
@@ -15,15 +13,11 @@ targets:
     info:
       path: HouseTourCapture/Info.plist
     settings:
-      base:
-        PRODUCT_NAME: HouseTourCapture
-        PRODUCT_BUNDLE_IDENTIFIER: com.housetour.capture
-        INFOPLIST_FILE: HouseTourCapture/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
-        SWIFT_VERSION: "5.9"
-        TARGETED_DEVICE_FAMILY: "1"
-        CODE_SIGNING_ALLOWED: "NO"
-        CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: "NO"
-        AD_HOC_CODE_SIGNING_ALLOWED: "YES"
-        ENABLE_BITCODE: "NO"
+      PRODUCT_NAME: HouseTourCapture
+      PRODUCT_BUNDLE_IDENTIFIER: com.housetour.capture
+      SWIFT_VERSION: "5.9"
+      TARGETED_DEVICE_FAMILY: "1"
+      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGN_IDENTITY: ""
+      CODE_SIGNING_REQUIRED: "NO"
+      AD_HOC_CODE_SIGNING_ALLOWED: "YES"
