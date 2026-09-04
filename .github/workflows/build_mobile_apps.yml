@@ -27,6 +27,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.5'
+          cache-disabled: true
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -71,16 +72,16 @@ jobs:
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== Generating Xcode project from project.yml ==="
-          xcodegen generate --spec project.yml
-          echo "=== Xcode project generated successfully ==="
+          echo "=== Running xcodegen generate ==="
+          xcodegen generate
+          echo "=== XcodeGen finished successfully ==="
           xcodebuild -project HouseTourCapture.xcodeproj -list
 
       - name: Build iOS App
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== Compiling iOS Release Binary for generic/platform=iOS ==="
+          echo "=== Building iOS App Release Binary ==="
           xcodebuild build \
             -project HouseTourCapture.xcodeproj \
             -scheme HouseTourCapture \
@@ -91,17 +92,17 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
-          echo "=== Xcode Build Finished ==="
+          echo "=== Build finished ==="
 
       - name: Package IPA for Sideloadly
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== Locating compiled .app bundle ==="
+          echo "=== Locating .app bundle in build directory ==="
           find build -name "*.app" -type d
           APP_PATH=$(find build -name "HouseTourCapture.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: No HouseTourCapture.app bundle found in build directory!"
+            echo "ERROR: HouseTourCapture.app not found!"
             exit 1
           fi
           echo "Found app at: $APP_PATH"
@@ -109,7 +110,7 @@ jobs:
           cp -r "$APP_PATH" Payload/
           zip -r HouseTourCapture.ipa Payload
           ls -lh HouseTourCapture.ipa
-          echo "HouseTourCapture.ipa packaged successfully!"
+          echo "HouseTourCapture.ipa created successfully!"
 
       - name: Upload iOS IPA for Sideloadly
         uses: actions/upload-artifact@v4

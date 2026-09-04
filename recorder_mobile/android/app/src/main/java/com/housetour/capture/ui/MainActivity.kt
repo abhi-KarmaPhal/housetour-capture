@@ -168,7 +168,7 @@ fun HouseTourCaptureApp(hasCameraPermission: Boolean) {
             StepIndicator(4, "Upload", currentStep)
         }
 
-        Divider(color = SurfaceBg, thickness = 1.dp)
+        HorizontalDivider(color = SurfaceBg, thickness = 1.dp)
 
         // Body
         Box(modifier = Modifier.weight(1f)) {
@@ -760,7 +760,7 @@ fun UploadStep(propertyName: String, roomsCount: Int, onReset: () -> Unit) {
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     LinearProgressIndicator(
-                        progress = { uploadProgress },
+                        progress = uploadProgress,
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                         color = CyanAccent,
                         trackColor = SurfaceBg
