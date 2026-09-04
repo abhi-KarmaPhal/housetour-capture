@@ -20,7 +20,17 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.housetour.capture
         INFOPLIST_FILE: HouseTourCapture/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGNING_ALLOWED: NO
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: NO
-        AD_HOC_CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: "NO"
+        AD_HOC_CODE_SIGNING_ALLOWED: "YES"
+        ENABLE_BITCODE: "NO"
+    dependencies:
+      - sdk: AVFoundation.framework
+      - sdk: CoreMotion.framework
+      - sdk: ARKit.framework
+      - sdk: RoomPlan.framework
+        weak: true
+      - sdk: CoreMedia.framework
