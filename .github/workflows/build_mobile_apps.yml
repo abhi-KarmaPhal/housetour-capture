@@ -37,30 +37,17 @@ jobs:
         run: |
           sed -i 's/\r$//' gradlew || true
           chmod +x gradlew
-          gradle :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log || {
-            echo "=== FULL GRADLE BUILD FAILURE LOG ==="
-            cat build.log
-            exit 1
-          }
-          echo "=== Found compiled APK files ==="
-          find . -name "*.apk" -ls
-
-      - name: Upload Android Build Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Android-Build-Logs
-          path: recorder_mobile/android/build.log
-          if-no-files-found: ignore
+          gradle :app:assembleDebug --no-daemon --stacktrace
+          echo "=== Locating output APK ==="
+          find . -name "*.apk"
+          cp app/build/outputs/apk/debug/*.apk ./HouseTourCapture-debug.apk || find . -name "*.apk" -exec cp {} ./HouseTourCapture-debug.apk \;
+          ls -lh HouseTourCapture-debug.apk
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: HouseTourCapture-Android-APK
-          path: |
-            recorder_mobile/android/app/build/outputs/apk/debug/app-debug.apk
-            recorder_mobile/android/app/build/outputs/apk/debug/*.apk
-            recorder_mobile/android/**/build/outputs/apk/**/*.apk
+          path: recorder_mobile/android/HouseTourCapture-debug.apk
           if-no-files-found: error
 
   # ===========================================================================
@@ -94,10 +81,8 @@ jobs:
         working-directory: recorder_mobile/ios
         run: |
           set -e
-          echo "=== Directory contents ==="
-          ls -la
-          echo "=== Generating Xcode project ==="
-          xcodegen generate --spec project.yml
+          echo "=== Running xcodegen ==="
+          xcodegen
           echo "=== Project generation successful ==="
           xcodebuild -project HouseTourCapture.xcodeproj -list
 
@@ -115,11 +100,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES 2>&1 | tee xcodebuild.log || {
-              echo "=== FULL XCODEBUILD LOG ==="
-              cat xcodebuild.log
-              exit 1
-            }
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
           echo "=== Build finished ==="
 
       - name: Package IPA for Sideloadly
