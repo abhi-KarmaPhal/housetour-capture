@@ -35,6 +35,7 @@ jobs:
       - name: Build Android APK
         working-directory: recorder_mobile/android
         run: |
+          sed -i 's/\r$//' gradlew || true
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -74,7 +75,7 @@ jobs:
           set -e
           echo "=== Running xcodegen generate ==="
           xcodegen generate
-          echo "=== XcodeGen finished successfully ==="
+          echo "=== Xcode project generated successfully ==="
           xcodebuild -project HouseTourCapture.xcodeproj -list
 
       - name: Build iOS App
